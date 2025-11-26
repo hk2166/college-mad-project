@@ -484,7 +484,7 @@ export const recipes = [
   id: '19',
   title: 'Aloo Paratha',
   category: 'Indian',
-  image: 'https://www.themealdb.com/images/media/meals/wuxrtu1483564410.jpg',
+  image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSKg1xrSbKVgnA2N4wKZvzg0tYX7PLdGT0VOA&s',
   serves: 3,
   total_time_min: 35,
   prep_time_min: 15,
@@ -863,17 +863,6 @@ export const recipes = [
   ],
   notes: 'A staple Odia comfort food, mild and nutritious.'
 }
-
-
-
-
-
-
-
-
-
-
-
 
   
 ];
