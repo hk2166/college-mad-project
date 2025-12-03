@@ -1,5 +1,7 @@
 # CookAi
 
+demo = https://drive.google.com/file/d/1Tuq5WDhloDgvsUSmL5mm0cng2pcLSb49/view?usp=sharing
+
 A recipe discovery app with AI-powered cooking assistance built with React Native and Expo.
 
 ## Setup
