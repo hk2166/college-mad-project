@@ -1,14 +1,13 @@
-// components/RecipeCard.js
-import { ChefHat, Clock, Users } from 'lucide-react-native';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ChefHat, Clock, Users } from "lucide-react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function RecipeCard({ 
-  title, 
-  cuisine_type, 
-  cooking_time, 
-  servings, 
+export default function RecipeCard({
+  title,
+  cuisine_type,
+  cooking_time,
+  servings,
   onPress,
-  image 
+  image,
 }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
@@ -16,8 +15,8 @@ export default function RecipeCard({
         <View style={styles.container}>
           <View style={styles.iconContainer}>
             {image ? (
-              <Image 
-                source={{ uri: image }} 
+              <Image
+                source={{ uri: image }}
                 style={styles.recipeImage}
                 resizeMode="cover"
               />
@@ -86,7 +85,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f43f5e",
     alignItems: "center",
     justifyContent: "center",
-    overflow: 'hidden',
+    overflow: "hidden",
     shadowColor: "#f43f5e",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -94,8 +93,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   recipeImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   textContainer: {
     flex: 1,
@@ -127,7 +126,7 @@ const styles = StyleSheet.create({
   },
   metaContainer: {
     flexDirection: "row",
-    gap:16,
+    gap: 16,
   },
   metaItem: {
     flexDirection: "row",

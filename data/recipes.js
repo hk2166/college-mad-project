@@ -761,7 +761,7 @@ export const recipes = [
   id: '29',
   title: 'Kerala Prawn Curry',
   category: 'Indian (Kerala)',
-  image: 'https://www.themealdb.com/images/media/meals/uyqrrv1511553350.jpg',
+  image: 'https://ichef.bbci.co.uk/food/ic/food_16x9_1600/recipes/keralan_prawn_curry_45390_16x9.jpg',
   serves: 4,
   total_time_min: 35,
   prep_time_min: 10,

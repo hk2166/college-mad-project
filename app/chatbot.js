@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -7,7 +7,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -15,98 +14,79 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import ChatMessage from "../components/ChatMessage";
 
-// ---------------------------------------------------------
-// 👇 PASTE YOUR GEMINI API KEY HERE
-// ---------------------------------------------------------
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY; // Replace this string with your actual key
-
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const ai = new GoogleGenAI({ apiKey: process.env.EXPO_PUBLIC_GEMINI_API_KEY });
 
 export default function ChatbotScreen() {
   const router = useRouter();
-  const [chatMessages, setChatMessages] = useState([
+  const [messages, setMessages] = useState([
     {
       id: "1",
-      text: "Hello! I'm your CookAi assistant powered by Google Gemini. Ask me anything about recipes, cooking tips, or ingredients!",
+      text: "Hey! I'm here to help with recipes and cooking tips. What are you making today?",
       isUser: false,
     },
   ]);
-  const [userInput, setUserInput] = useState("");
-  const [isSendingMessage, setIsSendingMessage] = useState(false);
-  const chatListRef = useRef(null);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const flatListRef = useRef(null);
 
-  const handleSendMessage = async () => {
-    if (!userInput.trim()) return;
+  const sendMessage = async () => {
+    if (!input.trim()) return;
 
-    const newUserMessage = {
+    const userMsg = {
       id: Date.now().toString(),
-      text: userInput.trim(),
+      text: input.trim(),
       isUser: true,
     };
 
-    setChatMessages((previousMessages) => [
-      ...previousMessages,
-      newUserMessage,
-    ]);
-    setUserInput("");
-    setIsSendingMessage(true);
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
 
     try {
-      // Call Gemini API
-      const chat = model.startChat({
-        history: [],
-        generationConfig: {
-          maxOutputTokens: 1000,
+      const userPrompt = userMsg.text;
+      const parts = [
+        {
+          text: `You're a cooking assistant. Keep it brief and practical.\n\nUser: ${userPrompt}`,
         },
+      ];
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: parts,
       });
 
-      const prompt = `You are a helpful cooking assistant. Answer questions about recipes, cooking techniques, and ingredients. Keep responses concise and practical. User question: ${newUserMessage.text}`;
+      const reply = response.text || "Hmm, I couldn't get that. Try again?";
 
-      const result = await chat.sendMessage(prompt);
-      const response = await result.response;
-      const assistantReply =
-        response.text() || "Sorry, I couldn't generate a response.";
-
-      const newAssistantMessage = {
+      const botMsg = {
         id: (Date.now() + 1).toString(),
-        text: assistantReply,
+        text: reply,
         isUser: false,
       };
 
-      setChatMessages((previousMessages) => [
-        ...previousMessages,
-        newAssistantMessage,
-      ]);
-    } catch (error) {
-      console.error("Error calling Gemini API:", error);
-      const errorMessage = {
+      setMessages((prev) => [...prev, botMsg]);
+    } catch (err) {
+      console.error(err);
+      const errorMsg = {
         id: (Date.now() + 1).toString(),
-        text: `Sorry, I couldn't connect to Gemini AI. Please check your API key. Error: ${error.message}`,
+        text: "Oops! Something went wrong. Check your connection and try again.",
         isUser: false,
       };
-      setChatMessages((previousMessages) => [
-        ...previousMessages,
-        errorMessage,
-      ]);
+      setMessages((prev) => [...prev, errorMsg]);
     } finally {
-      setIsSendingMessage(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (chatListRef.current) {
-      chatListRef.current.scrollToEnd({ animated: true });
-    }
-  }, [chatMessages]);
+    flatListRef.current?.scrollToEnd({ animated: true });
+  }, [messages]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-
-      {/* Header */}
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      <StatusBar barStyle="dark-content" />
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -120,11 +100,9 @@ export default function ChatbotScreen() {
         </View>
         <View style={{ width: 40 }} />
       </View>
-
-      {/* Chat Area */}
       <FlatList
-        ref={chatListRef}
-        data={chatMessages}
+        ref={flatListRef}
+        data={messages}
         keyExtractor={(message) => message.id}
         renderItem={({ item }) => (
           <ChatMessage message={item.text} isUser={item.isUser} />
@@ -132,8 +110,6 @@ export default function ChatbotScreen() {
         contentContainerStyle={styles.chatList}
         showsVerticalScrollIndicator={false}
       />
-
-      {/* Input Area */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
@@ -142,22 +118,22 @@ export default function ChatbotScreen() {
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}
-            placeholder="Ask about a recipe..."
+            placeholder="Ask me anything..."
             placeholderTextColor="#94a3b8"
-            value={userInput}
-            onChangeText={setUserInput}
+            value={input}
+            onChangeText={setInput}
             multiline
             maxLength={500}
           />
           <TouchableOpacity
             style={[
               styles.sendButton,
-              !userInput.trim() && styles.sendButtonDisabled,
+              !input.trim() && styles.sendButtonDisabled,
             ]}
-            onPress={handleSendMessage}
-            disabled={!userInput.trim() || isSendingMessage}
+            onPress={sendMessage}
+            disabled={!input.trim() || loading}
           >
-            {isSendingMessage ? (
+            {loading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Ionicons name="send" size={20} color="#fff" />
@@ -178,72 +154,89 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#e2e8f0",
-    elevation: 2,
+    borderBottomWidth: 0,
+    elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
   },
   backButton: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: "#f8fafc",
   },
   headerTitleContainer: {
     alignItems: "center",
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
     color: "#0f172a",
+    letterSpacing: 0.3,
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: "#64748b",
-    fontWeight: "500",
+    fontSize: 11,
+    color: "#94a3b8",
+    fontWeight: "600",
+    marginTop: 2,
   },
   chatList: {
-    paddingVertical: 16,
+    paddingTop: 20,
     paddingBottom: 20,
+    flexGrow: 1,
   },
   inputContainer: {
     backgroundColor: "#fff",
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderTopWidth: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 8,
   },
   inputWrapper: {
     flexDirection: "row",
     alignItems: "flex-end",
     backgroundColor: "#f8fafc",
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
+    borderRadius: 28,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderWidth: 1.5,
     borderColor: "#e2e8f0",
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 15,
     color: "#1e293b",
     maxHeight: 100,
-    paddingTop: 8,
-    paddingBottom: 8,
-    marginRight: 8,
+    paddingTop: 10,
+    paddingBottom: 10,
+    marginRight: 10,
+    lineHeight: 20,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: "#f43f5e",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#f43f5e",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   sendButtonDisabled: {
     backgroundColor: "#cbd5e1",
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

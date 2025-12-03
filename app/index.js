@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import CategoryCard from "../components/CategoryCard";
 import RecipeCard from "../components/RecipeCard";
-import { categories, recipes } from "./data/recipes";
+import { categories, recipes } from "../data/recipes";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -46,8 +46,8 @@ export default function HomeScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Hi There👋</Text>
-          <Text style={styles.title}>What would you like to cook today?</Text>
+          <Text style={styles.greeting}>Hey there 👋</Text>
+          <Text style={styles.title}>What's cooking?</Text>
 
           <View style={styles.searchContainer}>
             <Ionicons
@@ -88,13 +88,13 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Popular Recipes</Text>
-            <TouchableOpacity>
+            <Text style={styles.sectionTitle}>Trending Now</Text>
+            <TouchableOpacity onPress={() => router.push("/recipes")}>
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
           <FlatList
-            data={recipes}
+            data={recipes.slice(0, 5)}
             renderItem={renderRecipeCard}
             keyExtractor={(item) => item.id}
             horizontal
@@ -124,10 +124,7 @@ export default function HomeScreen() {
       </ScrollView>
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => {
-          console.log("Chatbot button pressed");
-          router.push("/chatbot");
-        }}
+        onPress={() => router.push("/chatbot")}
         activeOpacity={0.7}
       >
         <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
